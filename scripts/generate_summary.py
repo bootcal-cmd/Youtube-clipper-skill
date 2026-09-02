@@ -10,6 +10,67 @@ from pathlib import Path
 from typing import Dict
 
 
+def generate_summary_with_gemini(chapter_info: Dict) -> str:
+    """
+    调用 Gemini 生成适合社交媒体的文案（Markdown 格式）
+
+    Args:
+        chapter_info: 章节信息，包含 title、time_range、summary、keywords
+
+    Returns:
+        str: 生成的 Markdown 文案
+    """
+    import gemini_client
+
+    print(f"\n🤖 使用 Gemini ({gemini_client.GEMINI_MODEL}) 生成文案...")
+
+    prompt = f"""你是一位社交媒体内容编辑。请基于以下视频章节信息生成推广文案。
+
+章节标题: {chapter_info.get('title', 'Unknown')}
+时间范围: {chapter_info.get('time_range', 'N/A')}
+核心摘要: {chapter_info.get('summary', 'N/A')}
+关键词: {', '.join(chapter_info.get('keywords', []))}
+
+文案要求：
+1. 吸引人的标题（10-20字）
+2. 核心观点（3-5个要点，每个1-2句话）
+3. 分别生成三个平台版本：
+   - 小红书：口语化，可用 emoji，1000字以内
+   - 抖音：精炼，突出金句，300字以内
+   - 微信公众号：详细，结构清晰，不限字数
+
+请严格按以下 Markdown 格式输出，不要包含其他说明文字：
+
+# [标题]
+
+## 核心观点
+
+1. 观点1
+2. 观点2
+3. 观点3
+
+## 适合平台
+
+### 小红书版本
+
+[文案内容]
+
+### 抖音版本
+
+[文案内容]
+
+### 微信公众号版本
+
+[文案内容]
+
+## 标签
+
+#标签1 #标签2 #标签3
+"""
+
+    return gemini_client.generate_text(prompt)
+
+
 def generate_summary(
     chapter_info: Dict,
     output_path: str = None
@@ -17,8 +78,8 @@ def generate_summary(
     """
     生成总结文案
 
-    注意：此函数需要在 Claude Code Skill 环境中调用
-    Claude 会自动处理文案生成逻辑
+    如果配置了 GEMINI_API_KEY，直接调用 Gemini 生成完整文案；
+    否则仅输出占位模板，供 Claude Code Skill 环境或人工处理。
 
     Args:
         chapter_info: 章节信息，包含：
@@ -33,6 +94,23 @@ def generate_summary(
     """
     print(f"\n📝 生成总结文案...")
     print(f"   章节: {chapter_info.get('title', 'Unknown')}")
+
+    try:
+        import gemini_client
+    except ImportError:
+        gemini_client = None
+
+    if gemini_client and gemini_client.is_configured():
+        summary_template = generate_summary_with_gemini(chapter_info)
+
+        if output_path:
+            output_path = Path(output_path)
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            with open(output_path, 'w', encoding='utf-8') as f:
+                f.write(summary_template)
+            print(f"✅ 文案已保存: {output_path}")
+
+        return summary_template
 
     # 输出章节信息（供 Claude 分析）
     print("\n" + "="*60)
@@ -78,6 +156,8 @@ def generate_summary(
 ## 标签
 
 #标签1 #标签2 #标签3
+
+💡 提示：在 .env 中设置 GEMINI_API_KEY 后，此脚本会自动调用 Gemini 生成完整文案。
 """)
 
     # 生成基础文案（占位符）

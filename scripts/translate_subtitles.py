@@ -20,8 +20,8 @@ def translate_subtitles_batch(
     """
     批量翻译字幕
 
-    注意：此函数需要在 Claude Code Skill 环境中调用
-    Claude 会自动处理翻译逻辑
+    如果配置了 GEMINI_API_KEY，直接调用 Gemini API 执行翻译；
+    否则仅输出待翻译数据，供 Claude Code Skill 环境或人工处理。
 
     Args:
         subtitles: 字幕列表（每项包含 {start, end, text}）
@@ -44,7 +44,55 @@ def translate_subtitles_batch(
 
     print(f"   分为 {len(batches)} 批")
 
-    # 输出待翻译文本（供 Claude 处理）
+    try:
+        import gemini_client
+    except ImportError:
+        gemini_client = None
+
+    if gemini_client and gemini_client.is_configured():
+        print(f"\n🤖 使用 Gemini ({gemini_client.GEMINI_MODEL}) 翻译字幕...")
+
+        translated_subtitles = []
+
+        for batch_idx, batch in enumerate(batches, 1):
+            print(f"   翻译批次 {batch_idx}/{len(batches)}（{len(batch)} 条）...")
+
+            payload = [{'index': i, 'text': sub['text']} for i, sub in enumerate(batch)]
+
+            prompt = f"""请将以下字幕文本翻译为{target_lang}。
+
+翻译要求：
+1. 保持技术术语的准确性
+2. 口语化表达（适合短视频）
+3. 简洁流畅（避免冗长）
+4. 保持原意，不要添加或删减内容
+5. 逐条对应翻译，不要合并或拆分条目
+
+待翻译字幕（JSON 数组，index 为条目序号）：
+{json.dumps(payload, indent=2, ensure_ascii=False)}
+
+请以 JSON 数组格式输出，每项包含 "index" 和 "translation" 字段，不要包含任何其他说明文字：
+[
+  {{"index": 0, "translation": "译文"}},
+  {{"index": 1, "translation": "译文"}}
+]
+"""
+
+            result = gemini_client.generate_json(prompt)
+            translation_map = {item['index']: item['translation'] for item in result}
+
+            for i, sub in enumerate(batch):
+                translated_subtitles.append({
+                    'start': sub['start'],
+                    'end': sub['end'],
+                    'text': sub['text'],
+                    'translation': translation_map.get(i, '[翻译失败]')
+                })
+
+        print(f"\n✅ 翻译完成: {len(translated_subtitles)} 条")
+        return translated_subtitles
+
+    # 未配置 Gemini：输出待翻译文本（供 Claude 或人工处理）
     print("\n" + "="*60)
     print("待翻译字幕（JSON 格式）:")
     print("="*60)
@@ -70,18 +118,18 @@ def translate_subtitles_batch(
 ]
 
 请分批翻译，每批 {batch_size} 条。
+
+💡 提示：在 .env 中设置 GEMINI_API_KEY 后，此脚本会自动调用 Gemini 完成翻译。
 """)
 
-    # 注意：实际翻译由 Claude 在 Skill 执行时完成
-    # 这个脚本只是准备数据和提供接口
-    # 返回占位符数据
+    # 未配置 Gemini 时的占位符数据
     translated_subtitles = []
     for sub in subtitles:
         translated_subtitles.append({
             'start': sub['start'],
             'end': sub['end'],
             'text': sub['text'],
-            'translation': '[待翻译]'  # Claude 会在运行时替换
+            'translation': '[待翻译]'
         })
 
     return translated_subtitles
@@ -197,6 +245,7 @@ def main():
     subtitle_file = sys.argv[1]
     output_file = sys.argv[2] if len(sys.argv) > 2 else None
     batch_size = int(sys.argv[3]) if len(sys.argv) > 3 else 20
+    target_lang = sys.argv[4] if len(sys.argv) > 4 else "中文"
 
     try:
         # 加载字幕
@@ -206,19 +255,26 @@ def main():
             print("❌ 未找到有效字幕")
             sys.exit(1)
 
-        # 翻译字幕（准备数据）
-        translated = translate_subtitles_batch(subtitles, batch_size)
+        # 翻译字幕
+        translated = translate_subtitles_batch(subtitles, batch_size, target_lang)
 
         # 设置输出路径
         if output_file is None:
             subtitle_path = Path(subtitle_file)
             output_file = subtitle_path.parent / f"{subtitle_path.stem}_bilingual.srt"
 
-        # 创建双语字幕
-        # 注意：在实际使用中，Claude 会先完成翻译，然后再调用这个函数
-        print("\n⚠️  提示：此脚本需要在 Claude Code Skill 中运行")
-        print("   Claude 会自动处理翻译逻辑")
-        print("   当前仅输出待翻译数据")
+        try:
+            import gemini_client
+        except ImportError:
+            gemini_client = None
+
+        if gemini_client and gemini_client.is_configured():
+            # 翻译由 Gemini 完成，直接生成双语字幕文件
+            create_bilingual_subtitles(translated, output_file)
+        else:
+            print("\n⚠️  提示：未检测到 GEMINI_API_KEY，未自动生成双语字幕文件")
+            print("   在 .env 中设置 GEMINI_API_KEY 后可自动翻译并生成双语字幕，")
+            print("   或在 Claude Code 中完成翻译后调用 create_bilingual_subtitles()")
 
     except Exception as e:
         print(f"\n❌ 错误: {str(e)}")

@@ -47,7 +47,12 @@ model: claude-sonnet-4-5-20250514
    ```bash
    python3 -c "import yt_dlp; print('✅ yt-dlp available')"
    python3 -c "import pysrt; print('✅ pysrt available')"
+   python3 -c "import google.genai; print('✅ google-genai available')"
    ```
+
+4. 检测 `.env` 中是否配置了 `GEMINI_API_KEY`
+   - 已配置：章节分析、字幕翻译、文案生成将自动调用 Gemini API 完成
+   - 未配置：这些步骤将回退为由你（Claude）在对话中内联完成，如原始设计
 
 **如果环境检测失败**:
 - yt-dlp 未安装: 提示 `brew install yt-dlp` 或 `pip install yt-dlp`
@@ -55,7 +60,9 @@ model: claude-sonnet-4-5-20250514
   ```bash
   brew install ffmpeg-full  # macOS
   ```
-- Python 依赖缺失: 提示 `pip install pysrt python-dotenv`
+- Python 依赖缺失: 提示 `pip install pysrt python-dotenv google-genai`
+- `GEMINI_API_KEY` 未配置: 提示可在 `.env` 中设置以启用 Gemini 自动分析/翻译/文案
+  （获取地址: https://aistudio.google.com/apikey），或直接跳过继续使用原始流程
 
 **注意**:
 - 标准 Homebrew FFmpeg 不包含 libass，无法烧录字幕
@@ -95,7 +102,7 @@ model: claude-sonnet-4-5-20250514
 
 ### 阶段 3: 分析章节（核心差异化功能）
 
-**目标**: 使用 Claude AI 分析字幕内容，生成精细章节（2-5 分钟级别）
+**目标**: 使用 AI 分析字幕内容，生成精细章节（2-5 分钟级别）
 
 1. 调用 analyze_subtitles.py 解析 VTT 字幕
    ```bash
@@ -107,19 +114,24 @@ model: claude-sonnet-4-5-20250514
    - 总时长
    - 字幕条数
 
-3. **你需要执行 AI 分析**（这是最关键的步骤）：
-   - 阅读完整字幕内容
-   - 理解内容语义和主题转换点
-   - 识别自然的话题切换位置
-   - 生成 2-5 分钟粒度的章节（避免半小时粗粒度切分）
+3. **章节分析由脚本自动完成**：
+   - 如果 `.env` 中配置了 `GEMINI_API_KEY`，脚本会自动调用 Gemini 分析字幕语义、
+     识别主题转换点，并生成章节列表（同时保存为 `<字幕文件名>_chapters.json`）——
+     直接读取脚本输出并展示给用户即可，无需你自己重新分析。
+   - 如果未配置 `GEMINI_API_KEY`，脚本只会打印待分析的字幕文本，此时**你需要执行
+     AI 分析**（原始行为）：
+     - 阅读完整字幕内容
+     - 理解内容语义和主题转换点
+     - 识别自然的话题切换位置
+     - 生成 2-5 分钟粒度的章节（避免半小时粗粒度切分）
 
-4. 为每个章节生成：
+4. 每个章节包含：
    - **标题**: 精炼的主题概括（10-20 字）
    - **时间范围**: 起始和结束时间（格式: MM:SS 或 HH:MM:SS）
    - **核心摘要**: 1-2 句话说明这段讲了什么（50-100 字）
    - **关键词**: 3-5 个核心概念词
 
-5. **章节生成原则**：
+5. **章节生成原则**（无论由 Gemini 还是你自己分析，都应遵循）：
    - 粒度：每个章节 2-5 分钟（避免太短或太长）
    - 完整性：确保所有视频内容都被覆盖，无遗漏
    - 有意义：每个章节是一个相对独立的话题
@@ -183,16 +195,18 @@ python3 scripts/clip_video.py <video_path> <start_time> <end_time> <output_path>
 
 #### 5.3 翻译字幕（如果用户选择）
 ```bash
-python3 scripts/translate_subtitles.py <subtitle_path>
+python3 scripts/translate_subtitles.py <subtitle_path> <output_path>
 ```
 - **批量翻译优化**: 每批 20 条字幕一起翻译（节省 95% API 调用）
-- 翻译策略：
+- 若配置了 `GEMINI_API_KEY`，脚本会自动调用 Gemini 完成翻译**并直接生成双语字幕
+  文件**（等同于同时完成 5.3 和 5.4，跳到 5.5 即可）
+- 若未配置，脚本只输出待翻译数据，此时翻译逻辑需由你完成：
   - 保持技术术语的准确性
   - 口语化表达（适合短视频）
   - 简洁流畅（避免冗长）
 - 输出: `<章节标题>_translated.srt`
 
-#### 5.4 生成双语字幕文件（如果用户选择）
+#### 5.4 生成双语字幕文件（如果用户选择，且脚本未自动生成）
 - 合并英文和中文字幕
 - 格式: SRT 双语（每条字幕包含英文和中文）
 - 样式: 英文在上，中文在下
@@ -215,7 +229,9 @@ python3 scripts/burn_subtitles.py <video_path> <subtitle_path> <output_path>
 python3 scripts/generate_summary.py <chapter_info>
 ```
 - 基于章节标题、摘要和关键词
-- 生成适合社交媒体的文案
+- 若配置了 `GEMINI_API_KEY`，脚本会自动调用 Gemini 生成完整文案并保存文件，
+  直接读取输出即可
+- 若未配置，脚本只输出占位模板，文案内容需由你补充
 - 包含: 标题、核心观点、适合平台（小红书、抖音等）
 - 输出: `<章节标题>_summary.md`
 

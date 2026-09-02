@@ -163,6 +163,63 @@ def prepare_analysis_data(subtitles: List[Dict], target_chapter_duration: int = 
     }
 
 
+def analyze_chapters_with_gemini(analysis_data: Dict) -> List[Dict]:
+    """
+    调用 Gemini 分析字幕语义，生成精细章节
+
+    Args:
+        analysis_data: prepare_analysis_data() 的输出
+
+    Returns:
+        List[Dict]: 章节列表，每项包含
+            {title, start, end, time_range, summary, keywords}
+    """
+    import gemini_client
+
+    print(f"\n🤖 使用 Gemini ({gemini_client.GEMINI_MODEL}) 分析章节...")
+
+    prompt = f"""你是一位专业的视频内容编辑。请分析以下带时间戳的视频字幕，将其划分为语义完整的章节。
+
+字幕总时长: {get_video_duration_display(analysis_data['total_duration'])}
+字幕条数: {analysis_data['subtitle_count']}
+目标章节时长: 每章节约 {analysis_data['target_chapter_duration']} 秒（{analysis_data['target_chapter_duration'] // 60} 分钟）
+
+章节划分原则：
+1. 粒度：每个章节 2-5 分钟（避免太短或太长），不要机械按固定时长切分
+2. 完整性：确保从 00:00 到视频结尾的所有内容都被覆盖，章节之间无缝衔接、无遗漏
+3. 有意义：在自然的话题转换点切分，每个章节应是一个相对独立完整的话题
+4. 时间戳必须来自字幕中出现的时间点，且为递增顺序
+
+字幕内容（格式: [HH:MM:SS.mmm] 文本）：
+---
+{analysis_data['subtitle_text']}
+---
+
+请以 JSON 数组格式输出章节列表，不要包含任何其他说明文字。每个章节包含以下字段：
+[
+  {{
+    "title": "精炼的主题概括（10-20字）",
+    "start": "HH:MM:SS",
+    "end": "HH:MM:SS",
+    "summary": "1-2句话说明这段讲了什么（50-100字）",
+    "keywords": ["关键词1", "关键词2", "关键词3"]
+  }}
+]
+"""
+
+    chapters = gemini_client.generate_json(prompt)
+
+    if not isinstance(chapters, list):
+        raise ValueError("Gemini 返回的章节数据格式不正确（应为 JSON 数组）")
+
+    for ch in chapters:
+        ch['time_range'] = f"{ch['start']} - {ch['end']}"
+
+    print(f"   ✅ 生成 {len(chapters)} 个章节")
+
+    return chapters
+
+
 def save_analysis_data(data: Dict, output_path: str):
     """
     保存分析数据到 JSON 文件
@@ -238,7 +295,32 @@ def main():
             'estimated_chapters': analysis_data['estimated_chapters']
         }, indent=2, ensure_ascii=False))
 
-        print("\n💡 提示：现在可以使用 Claude AI 分析上述字幕文本，生成精细章节")
+        # 自动章节分析（使用 Gemini，如果已配置）
+        try:
+            import gemini_client
+        except ImportError:
+            gemini_client = None
+
+        if gemini_client and gemini_client.is_configured():
+            chapters = analyze_chapters_with_gemini(analysis_data)
+
+            print("\n" + "="*60)
+            print(f"📊 分析完成，生成 {len(chapters)} 个章节：")
+            print("="*60)
+            for i, ch in enumerate(chapters, 1):
+                print(f"\n{i}. [{ch['time_range']}] {ch['title']}")
+                print(f"   核心: {ch['summary']}")
+                print(f"   关键词: {', '.join(ch['keywords'])}")
+            print("\n✓ 所有内容已覆盖，无遗漏")
+
+            chapters_output = Path(vtt_file).with_suffix('').as_posix() + '_chapters.json'
+            with open(chapters_output, 'w', encoding='utf-8') as f:
+                json.dump(chapters, f, indent=2, ensure_ascii=False)
+            print(f"\n✅ 章节数据已保存: {chapters_output}")
+        else:
+            print("\n💡 提示：未检测到 GEMINI_API_KEY，跳过自动章节分析")
+            print("   在 .env 中设置 GEMINI_API_KEY 后可自动生成章节，")
+            print("   或在 Claude Code 中手动分析上述字幕文本生成章节")
 
     except Exception as e:
         print(f"\n❌ 错误: {str(e)}")

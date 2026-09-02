@@ -129,12 +129,12 @@ main() {
 
     # 尝试使用 pip3，如果不存在则使用 pip
     if command_exists pip3; then
-        pip3 install -q yt-dlp pysrt python-dotenv
+        pip3 install -q yt-dlp pysrt python-dotenv google-genai
     else
-        pip install -q yt-dlp pysrt python-dotenv
+        pip install -q yt-dlp pysrt python-dotenv google-genai
     fi
 
-    print_success "Python 依赖安装完成（yt-dlp、pysrt、python-dotenv）"
+    print_success "Python 依赖安装完成（yt-dlp、pysrt、python-dotenv、google-genai）"
 
     # 8. 检查 yt-dlp
     print_info "检查 yt-dlp..."
@@ -203,6 +203,9 @@ main() {
         print_info "  nano $SKILL_DIR/.env"
         print_info "  或"
         print_info "  code $SKILL_DIR/.env"
+        echo ""
+        print_warning "使用 Gemini 进行章节分析/翻译/文案生成，需在 .env 中设置 GEMINI_API_KEY"
+        print_info "获取 API Key: https://aistudio.google.com/apikey"
     else
         print_warning "未找到 .env.example 文件"
     fi
