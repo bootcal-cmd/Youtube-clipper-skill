@@ -38,6 +38,7 @@ tmp/
 
 # Test files
 *.mp4
+*.mp3
 *.webm
 *.mkv
 *.avi
