@@ -146,21 +146,21 @@ for f in range(int(round(TOTAL * FPS))):
         L.alpha_composite(RANSOM[(f // 5) % 3])
     elif seg == 1:
         pill(L, "o vídeo que eu postei 👇".replace(" 👇", ""), 170, F(800, 46), (255, 255, 255), (20, 20, 20))
-        if lt > 3.4:
-            put_card(L, C_LIST, st + 3.4, t, cy=1170)
-            pill(L, "o produto que eu vinculei", 1040, F(800, 40), (30, 150, 90), (255, 255, 255), int(255 * min(1, (lt - 3.4) / .25)))
+        if lt > 5.0:
+            put_card(L, C_LIST, st + 5.0, t, cy=1170)
+            pill(L, "o produto que eu vinculei", 1040, F(800, 40), (30, 150, 90), (255, 255, 255), int(255 * min(1, (lt - 5.0) / .25)))
     elif seg == 2: put_card(L, C_PTS, st, t)
     elif seg == 3:
-        put_card(L, C_MOT, st, t, cy=800, hl=[(HL_FONE, st + 2.3, 1.2), (HL_PULS, st + 6.0, 1.0)])
+        put_card(L, C_MOT, st, t, cy=800, hl=[(HL_FONE, st + 2.8, 1.2), (HL_PULS, st + 7.9, 1.0)])
     elif seg == 4:
         pop_word(L, "FONE", "🎧", W / 2, 620, st + 0.0, t, (255, 90, 90))
-        pop_word(L, "PULSEIRA", "⌚", W / 2, 800, st + 0.55, t, (255, 200, 60))
-        pop_word(L, "CAMISOLA?", "👗", W / 2, 980, st + 1.2, t, (255, 255, 255))
+        pop_word(L, "PULSEIRA", "⌚", W / 2, 800, st + 1.2, t, (255, 200, 60))
+        pop_word(L, "CAMISOLA?", "👗", W / 2, 980, st + 2.0, t, (255, 255, 255))
     elif seg == 5: put_card(L, C_REC, st, t, cy=800)
     elif seg == 6: put_card(L, C_INT, st, t, cy=820)
     elif seg == 7:
-        if lt > meta["dur"][7] - 1.6:
-            k = min(1.0, (lt - (meta["dur"][7] - 1.6)) / .2)
+        if lt > meta["dur"][7] - 1.0:
+            k = min(1.0, (lt - (meta["dur"][7] - 1.0)) / .2)
             fnt = F(900, int(96 * (1.3 - .3 * k)))
             ImageDraw.Draw(L).text((W / 2, 760), "ABSURDO.", font=fnt, fill=(255, 255, 255), stroke_width=8, stroke_fill=WINE, anchor="mm")
     elif seg == 8:
