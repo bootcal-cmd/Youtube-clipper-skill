@@ -84,13 +84,49 @@ def cta(img, t0):
     for it in items: stroke(d, it, 24, (60, 60, 60))
     for it in items: stroke(d, it, 13, (255, 255, 255))
 
+
+# plaquinhas (letras recortadas) do hook
+SERIFS = ["/usr/share/fonts/truetype/liberation/LiberationSerif-Bold.ttf", "/usr/share/fonts/truetype/liberation/LiberationSerif-BoldItalic.ttf",
+          "/usr/share/fonts/truetype/dejavu/DejaVuSerif-Bold.ttf"]
+TILES = [(18, 18, 18), (214, 172, 92), (236, 205, 200), (245, 240, 232), (120, 90, 60)]
+def _tile(ch, rnd, h=150):
+    font = ImageFont.truetype(rnd.choice(SERIFS), int(h * rnd.uniform(.80, .95))); bg = rnd.choice(TILES)
+    fg = rnd.choice([(255, 255, 255), (245, 225, 180)]) if sum(bg) < 520 else rnd.choice([(18, 18, 18), (90, 60, 30)])
+    w = int(font.getlength(ch)) + rnd.randint(12, 24); hh = h + rnd.randint(-14, 10)
+    im = Image.new("RGBA", (w + 20, hh + 20), (0, 0, 0, 0)); d = ImageDraw.Draw(im); j = lambda: rnd.randint(-5, 5)
+    d.polygon([(10 + j(), 10 + j()), (w + 10 + j(), 10 + j()), (w + 10 + j(), hh + 10 + j()), (10 + j(), hh + 10 + j())], fill=bg + (255,))
+    if rnd.random() < .35:
+        for gx in range(10, w + 10, 12): d.line((gx, 10, gx, hh + 10), fill=(255, 255, 255, 60), width=4)
+        for gy in range(10, hh + 10, 12): d.line((10, gy, w + 10, gy), fill=(255, 255, 255, 60), width=4)
+    d.text(((w + 20) / 2, (hh + 20) / 2), ch, font=font, fill=fg, anchor="mm")
+    im = im.rotate(rnd.uniform(-8, 8), resample=Image.BICUBIC, expand=True)
+    sh = Image.new("RGBA", im.size, (0, 0, 0, 0)); sh.putalpha(im.getchannel("A").point(lambda a: a * .45))
+    out = Image.new("RGBA", (im.width + 8, im.height + 8), (0, 0, 0, 0))
+    out.alpha_composite(sh.filter(ImageFilter.GaussianBlur(4)), (6, 6)); out.alpha_composite(im, (0, 0)); return out
+def _ransom(text, seed, y, maxw=960):
+    rnd = random.Random(seed); tiles = [None if c == " " else _tile(c, rnd) for c in text]
+    gap, sp = -16, 60; total = sum(sp if t is None else t.width + gap for t in tiles); sc = min(1.0, maxw / total)
+    layer = Image.new("RGBA", (W, H), (0, 0, 0, 0)); x = (W - total * sc) / 2
+    for t in tiles:
+        if t is None: x += sp * sc; continue
+        t2 = t.resize((int(t.width * sc), int(t.height * sc)), Image.LANCZOS)
+        layer.alpha_composite(t2, (int(x), int(y + rnd.randint(-8, 8)))); x += (t.width + gap) * sc
+    return layer
+RANSOM = [_ransom("ESPERA", s_, 1080) for s_ in (41, 42, 43)]
+
 # --- linha do tempo (duração de saída, função que devolve o quadro) ---
 SEGS = []
 def seg(dur, fn): SEGS.append((dur, fn))
 
 def A(lt):  # hook em câmera lenta
     img = zoom(fr(0.0 + lt * 0.5), 1.0 + 0.06 * lt).convert("RGBA")
-    rich(img, "espera ela virar… 😳", W / 2, 230, F(900, 74), n=int(lt * 24)); return img
+    base = RANSOM[int(lt * 6) % 3]; k = min(1.0, lt / 0.18)
+    if k < 1:  # entrada com "pop"
+        sc = 0.6 + 0.5 * k if k < .8 else 1.1 - .5 * (k - .8); r = base.resize((int(W * sc), int(H * sc)), Image.LANCZOS); cx, cy = W / 2, 1160
+        if sc <= 1: img.alpha_composite(r, (int(cx - cx * sc), int(cy - cy * sc)))
+        else: img.alpha_composite(r, (0, 0), (int(cx * sc - cx), int(cy * sc - cy)))
+    else: img.alpha_composite(base)
+    rich(img, "ela virar… 😳", W / 2, 1270, F(800, 72), n=int(max(0, lt - .15) * 22)); return img
 seg(1.6, A)
 def B(lt):  # aceleração com rastro
     p = lt / 0.8; st = 0.8 + (3.1 - 0.8) * ease(p); return zoom(blurred(st, 3), 1.08 - 0.08 * p).convert("RGBA")
