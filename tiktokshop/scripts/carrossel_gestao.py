@@ -46,7 +46,7 @@ def curve(d,pts,col,w=8):
 def save(im,n): im.save(f"slide{n}.png")
 
 # 1 capa
-im,d=frame(1,"@seuperfil • gestão de alta performance")
+im,d=frame(1,"@oficialcosmelima • gestão de alta performance")
 d.text((80,170),"LIDERANÇA",font=F(800,28),fill=GOLD)
 y=text(d,"Sua equipe é de alta performance ou só funciona quando você está olhando?",80,230,F(900,76),mw=920,ls=1.16,hl=("alta","performance"))
 y=text(d,"A diferença sutil entre liderar pelo contexto e a armadilha do microgerenciamento.",80,y+26,F(500,36),fill=MUTE,mw=860,ls=1.35)
@@ -63,7 +63,7 @@ d.text((gx1-60,gy1+14),"tempo",font=F(500,22),fill=MUTE)
 save(im,1)
 
 # 2 dor
-im,d=frame(2,"@seuperfil • gestão de alta performance")
+im,d=frame(2,"@oficialcosmelima • gestão de alta performance")
 d.text((80,170),"A DOR",font=F(800,28),fill=GOLD)
 y=text(d,"Você tira 3 dias de folga e a operação trava?",80,225,F(900,62),mw=920,ls=1.16,hl=("trava?",))
 # calendário + gargalo
@@ -85,7 +85,7 @@ y2=text(d,"Centralizar decisões dá uma falsa sensação de segurança, mas tra
 save(im,2)
 
 # 3 virada
-im,d=frame(3,"@seuperfil • gestão de alta performance")
+im,d=frame(3,"@oficialcosmelima • gestão de alta performance")
 d.text((80,170),"A VIRADA DE CHAVE",font=F(800,28),fill=GOLD)
 y=text(d,"Alta performance não nasce de vigilância. Nasce do Comando por Intenção.",80,225,F(900,60),mw=920,ls=1.16,hl=("comando","intenção."))
 y+=40
@@ -100,7 +100,7 @@ text(d,"Você dá o destino e o motivo. Liberdade total no caminho.",80,y+480,F(
 save(im,3)
 
 # 4 alinhamento x autonomia
-im,d=frame(4,"@seuperfil • gestão de alta performance")
+im,d=frame(4,"@oficialcosmelima • gestão de alta performance")
 d.text((80,170),"O ERRO CLÁSSICO",font=F(800,28),fill=GOLD)
 y=text(d,"A regra do Alinhamento × Autonomia",80,225,F(900,62),mw=920,ls=1.16,hl=("alinhamento","autonomia"))
 # dois painéis
@@ -124,7 +124,7 @@ for i,t in enumerate(["Metas claras","Prazos inegociáveis","Limites de seguran�
 save(im,4)
 
 # 5 delegação 1-2
-im,d=frame(5,"@seuperfil • gestão de alta performance")
+im,d=frame(5,"@oficialcosmelima • gestão de alta performance")
 d.text((80,170),"FRAMEWORK • PARTE 1",font=F(800,28),fill=GOLD)
 y=text(d,"Como passar o bastão na prática",80,225,F(900,62),mw=920,ls=1.16)
 rr(d,(80,y+30,430,y+82),26,fill=GOLD); d.text((255,y+56),"📌 SALVE ESTE SLIDE".replace("📌 ",""),font=F(800,24),fill=BG,anchor="mm")
@@ -141,7 +141,7 @@ for i,(n,t,q,s) in enumerate(cards):
 save(im,5)
 
 # 6 nível 3
-im,d=frame(6,"@seuperfil • gestão de alta performance")
+im,d=frame(6,"@oficialcosmelima • gestão de alta performance")
 d.text((80,170),"FRAMEWORK • PARTE 2",font=F(800,28),fill=GOLD)
 y=text(d,"Onde mora a alta performance",80,225,F(900,62),mw=920,ls=1.16,hl=("alta","performance"))
 yy=y+30; rr(d,(80,yy,1000,yy+330),28,fill=BG2,outline=GOLD,w=4)
@@ -158,7 +158,7 @@ text(d,"O segredo: mover seu time do Nível 1 ao Nível 3 o mais rápido possív
 save(im,6)
 
 # 7 cobrança
-im,d=frame(7,"@seuperfil • gestão de alta performance")
+im,d=frame(7,"@oficialcosmelima • gestão de alta performance")
 d.text((80,170),"COBRAR SEM SER O CHEFE CHATO",font=F(800,28),fill=GOLD)
 y=text(d,"A cobrança muda de lugar.",80,225,F(900,66),mw=920,ls=1.16)
 y=text(d,"Pare de cobrar tarefas soltas no WhatsApp o dia inteiro. Crie rituais de cadência:",80,y+20,F(500,34),fill=MUTE,mw=900,ls=1.35)
@@ -172,7 +172,7 @@ rr(d,(80,yy,1000,yy+130),26,fill=GOLD); d.text((120,yy+22),"COBRE O INDICADOR CO
 save(im,7)
 
 # 8 fechamento
-im,d=frame(8,"@seuperfil • gestão de alta performance")
+im,d=frame(8,"@oficialcosmelima • gestão de alta performance")
 d.text((80,170),"RESUMO",font=F(800,28),fill=GOLD)
 rr(d,(80,225,520,520),26,fill=BG2,outline=RED); rr(d,(560,225,1000,520),26,fill=BG2,outline=GRN)
 d.text((110,250),"MICROGERENCIAMENTO",font=F(800,24),fill=RED); text(d,"gera obediência e cansaço.",110,300,F(900,40),mw=380,ls=1.2)
