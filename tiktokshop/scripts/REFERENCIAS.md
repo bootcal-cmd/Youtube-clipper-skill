@@ -25,3 +25,19 @@ Como aplicar com o material que temos:
 - Quando houver um trecho da peça sozinha (cabide, caixa, mesa) e outro vestida, usar a **transição girando** entre eles (rotação de 180° + zoom + leve desfoque de movimento, ~0,6s) no lugar do corte seco.
 - Para gravar do zero: celular dentro da máquina (porta aberta, tambor limpo e seco), câmera frontal 0,5x, tirar a peça, girar o celular junto com o tambor no fim do take 1, e começar o take 2 já vestida girando no sentido contrário.
 - Texto opcional: no máximo uma linha curta no hook; o resto limpo.
+
+## Técnicas do vídeo "17 efeitos de vídeo que o Claude cria" (aprendidas)
+Formato: apresentador segura um celular (mockup) que mostra cada efeito com contador "01/17"; título fixo no topo; legendas palavra-a-palavra; CTA "comenta EFEITOS". Os efeitos são implementados em `tiktokshop/scripts/efeitos/efeitos.py` (fn(img, t) -> img):
+1. `polaroids` – fotos (frames do próprio vídeo) caem em ângulos aleatórios com sombra
+2. `neon_frame` – contorno neon verde pulsante + chamada ("PULA PRA")
+3. `bw_keyword` – preto e branco + palavra-chave amarela gigante com "pop"
+4. `chat_split` – tela dividida: vídeo em cima, conversa de chat digitando embaixo
+5. `scrapbook` – papel kraft, vídeo inclinado com fita, letras recortadas (corta e cola)
+6. `doodles` – quadro negro com rabiscos desenhados à mão (coroa, estrela, coração)
+7. `duotone_red` – duotone vermelho + pergunta gigante
+8. `magazine` – capa de revista (título serifado, foto, selo)
+9. `glass_text` – texto gigante "vidro" (desfoque translúcido)
+10. `timeline_ui` – timeline de editor com playhead e faixas coloridas
+11. `gradient_promo` – card com degradê roxo, título e vídeo arredondado
+Ideias da referência ainda não implementadas: mockup de celular na mão, recorte da pessoa (precisa segmentação), efeito de "gravar → mandar → postar" (checklist), página de revista com vários títulos.
+Demo: `tiktokshop/scripts/efeitos/demo.py <pasta_frames>` (FONT_DIR = pasta com mont*.ttf).
